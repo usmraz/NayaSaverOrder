@@ -1,0 +1,12 @@
+{
+  "name": "Naya Sawera Order Pro",
+  "description": "A high-performance PWA for managing purchase orders with automated carton calculations and dynamic discount logic.",
+  "short_name": "CartonFlow",
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#7A2B83",
+  "background_color": "#FEFCE8",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
