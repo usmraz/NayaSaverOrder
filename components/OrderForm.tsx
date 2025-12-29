@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Product, OrderItem } from '../types';
 import { unitsToCartons, calculateDiscount, calculateItemNet, formatCurrency } from '../utils/math';
-import { Search, Plus, Trash2, Edit2, CheckCircle2, ShoppingBag, Package, BadgeDollarSign, AlertCircle, XCircle, RotateCcw } from 'lucide-react';
+import { Search, Plus, Trash2, Edit2, CheckCircle2, ShoppingBag, Package, BadgeDollarSign, AlertCircle, XCircle, RotateCcw, Percent } from 'lucide-react';
 
 interface OrderFormProps {
   products: Product[];
@@ -21,7 +21,6 @@ const OrderForm: React.FC<OrderFormProps> = ({ products, orderItems, onUpdateOrd
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [confirmClear, setConfirmClear] = useState(false);
 
-  // Watch for order clearance to reset local input state
   useEffect(() => {
     if (orderItems.length === 0) {
       handleResetForm();
@@ -43,7 +42,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ products, orderItems, onUpdateOrd
       setConfirmClear(false);
     } else {
       setConfirmClear(true);
-      setTimeout(() => setConfirmClear(false), 3000); // Reset confirmation state after 3 seconds
+      setTimeout(() => setConfirmClear(false), 3000);
     }
   };
 
@@ -61,7 +60,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ products, orderItems, onUpdateOrd
   const handleSelectProduct = (p: Product) => {
     setSelectedProductId(p.id);
     setUnitPrice(p.basePrice.toString());
-    setDiscountStr(p.defaultDiscount.toString());
+    setDiscountStr(''); // Keep empty to indicate using Base Discount initially
     setQuantity('');
     setSearchTerm(p.name);
   };
@@ -76,18 +75,23 @@ const OrderForm: React.FC<OrderFormProps> = ({ products, orderItems, onUpdateOrd
     return !isNaN(val) && val >= 0;
   }, [unitPrice]);
 
+  const currentSelectedProduct = products.find(p => p.id === selectedProductId);
+
+  const effectiveDiscount = useMemo(() => {
+    if (!currentSelectedProduct) return 0;
+    return calculateDiscount(discountStr, currentSelectedProduct.defaultDiscount);
+  }, [currentSelectedProduct, discountStr]);
+
   const handleAddToOrder = () => {
     const product = products.find(p => p.id === selectedProductId);
     if (!product || !isQuantityValid || !isPriceValid) return;
 
-    const finalDiscount = calculateDiscount(discountStr, product.defaultDiscount);
-    
     onUpdateOrder({
       id: product.id,
       product,
       quantity: parseFloat(quantity),
       price: parseFloat(unitPrice),
-      discount: finalDiscount
+      discount: effectiveDiscount
     });
 
     handleResetForm();
@@ -97,12 +101,13 @@ const OrderForm: React.FC<OrderFormProps> = ({ products, orderItems, onUpdateOrd
     setEditingItemId(item.id);
     setQuantity(item.quantity.toString());
     setUnitPrice(item.price.toString());
+    // For editing, show absolute value initially
     setDiscountStr(item.discount.toString());
   };
 
   const saveEdit = (item: OrderItem) => {
     if (!isQuantityValid || !isPriceValid) return;
-    const finalDiscount = calculateDiscount(discountStr, item.discount);
+    const finalDiscount = calculateDiscount(discountStr, item.product.defaultDiscount);
     onUpdateOrder({
       ...item,
       quantity: parseFloat(quantity),
@@ -115,15 +120,10 @@ const OrderForm: React.FC<OrderFormProps> = ({ products, orderItems, onUpdateOrd
     setDiscountStr('');
   };
 
-  const currentSelectedProduct = products.find(p => p.id === selectedProductId);
-  
   const liveNetAmount = useMemo(() => {
     if (!currentSelectedProduct || !isQuantityValid || !isPriceValid) return 0;
-    const qty = parseFloat(quantity);
-    const price = parseFloat(unitPrice);
-    const disc = calculateDiscount(discountStr, currentSelectedProduct.defaultDiscount);
-    return calculateItemNet(price, qty, disc);
-  }, [currentSelectedProduct, quantity, unitPrice, discountStr, isQuantityValid, isPriceValid]);
+    return calculateItemNet(parseFloat(unitPrice), parseFloat(quantity), effectiveDiscount);
+  }, [currentSelectedProduct, quantity, unitPrice, effectiveDiscount, isQuantityValid, isPriceValid]);
 
   return (
     <div className="space-y-6">
@@ -217,30 +217,38 @@ const OrderForm: React.FC<OrderFormProps> = ({ products, orderItems, onUpdateOrd
                   value={unitPrice}
                   onChange={(e) => setUnitPrice(e.target.value)}
                 />
-                {!isPriceValid && unitPrice !== '' && (
-                   <p className="text-[10px] text-red-500 font-bold mt-2 ml-1 flex items-center gap-1">
-                      <AlertCircle size={12} /> Invalid Price
-                   </p>
-                )}
               </div>
             </div>
 
-            <div className="grid grid-cols-1">
-              <div>
-                <label className="text-[10px] font-black text-slate-500 block mb-1.5 ml-1 uppercase tracking-widest">Discount (+/-/=)</label>
-                <input 
-                  type="text"
-                  placeholder="8.39"
-                  className="w-full p-4 rounded-2xl border-2 border-slate-100 bg-slate-50 text-emerald-700 text-base font-black focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all shadow-sm"
-                  value={discountStr}
-                  onChange={(e) => setDiscountStr(e.target.value)}
-                />
-                {discountStr && discountStr.match(/[+-=]/) && (
-                   <p className="text-[10px] text-emerald-600 font-black mt-2 ml-1 flex items-center gap-1 uppercase tracking-wider">
-                      <CheckCircle2 size={12} /> Final: {calculateDiscount(discountStr, currentSelectedProduct.defaultDiscount)}%
+            <div className="bg-slate-50 p-5 rounded-[2rem] border-2 border-slate-100">
+                <div className="flex justify-between items-center mb-2 px-1">
+                  <label className="text-[10px] font-black text-[#7A2B83] uppercase tracking-widest flex items-center gap-1.5">
+                    <Percent size={14} /> Discount Adjustment
+                  </label>
+                  <span className="text-[9px] font-black text-slate-400 uppercase">Base: {currentSelectedProduct.defaultDiscount}%</span>
+                </div>
+                <div className="relative">
+                  <input 
+                    type="text"
+                    placeholder="Type +5, -2, or 15%"
+                    className="w-full p-4 rounded-2xl border-2 border-slate-200 bg-white text-emerald-700 text-lg font-black focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all shadow-sm"
+                    value={discountStr}
+                    onChange={(e) => setDiscountStr(e.target.value)}
+                  />
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                    <span className="text-[10px] font-black text-slate-300 uppercase">Effective:</span>
+                    <span className="text-sm font-black text-emerald-600 bg-emerald-50 px-3 py-1 rounded-xl border border-emerald-100">
+                      {effectiveDiscount}%
+                    </span>
+                  </div>
+                </div>
+                {discountStr && (
+                   <p className="text-[9px] text-slate-500 font-bold mt-2 ml-1 flex items-center gap-1 italic uppercase">
+                      {discountStr.startsWith('+') || discountStr.startsWith('-') 
+                        ? `${currentSelectedProduct.defaultDiscount}% ${discountStr.startsWith('+') ? '+' : ''}${discountStr} = ${effectiveDiscount}%`
+                        : `Overriding default with ${effectiveDiscount}%`}
                    </p>
                 )}
-              </div>
             </div>
 
             {isQuantityValid && isPriceValid && (
@@ -256,10 +264,6 @@ const OrderForm: React.FC<OrderFormProps> = ({ products, orderItems, onUpdateOrd
                       {formatCurrency(liveNetAmount)}
                     </span>
                   </div>
-                </div>
-                <div className="flex flex-col items-end opacity-60 text-right relative z-10">
-                   <span className="text-[10px] font-black text-white/50 uppercase tracking-tighter">Current Base</span>
-                   <span className="text-xs font-black text-[#F9E219]">{formatCurrency(currentSelectedProduct.basePrice)}/u</span>
                 </div>
               </div>
             )}
@@ -279,14 +283,6 @@ const OrderForm: React.FC<OrderFormProps> = ({ products, orderItems, onUpdateOrd
         <div className="flex justify-between items-center px-2">
             <h2 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
                Summary ({orderItems.length})
-               {orderItems.length > 0 && (
-                 <button 
-                  onClick={handleClearTrigger}
-                  className={`text-[10px] font-black px-4 py-2 rounded-full flex items-center gap-1.5 transition-all border-2 ${confirmClear ? 'bg-red-500 text-white border-red-600 animate-pulse' : 'bg-white text-[#7A2B83] border-[#7A2B83]/10 hover:border-[#7A2B83]/30 shadow-sm'}`}
-                 >
-                   <XCircle size={12} strokeWidth={3} /> {confirmClear ? 'Confirm Clear?' : 'Clear All'}
-                 </button>
-               )}
             </h2>
             {orderItems.length > 0 && (
               <div className="flex flex-col items-end">
@@ -300,7 +296,6 @@ const OrderForm: React.FC<OrderFormProps> = ({ products, orderItems, onUpdateOrd
           <div className="text-center py-20 text-slate-300 border-4 border-dashed border-slate-100 rounded-[3rem] bg-white shadow-inner">
             <ShoppingBag size={56} className="mx-auto mb-4 opacity-5" />
             <p className="font-black uppercase text-xs tracking-[0.2em] text-slate-400">List Empty</p>
-            <p className="text-[10px] uppercase mt-2 text-slate-300 font-bold">Select products above to build order</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -359,7 +354,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ products, orderItems, onUpdateOrd
                         />
                       </div>
                       <div className="col-span-2">
-                        <span className="text-[10px] font-black text-[#7A2B83]/60 block mb-1.5 ml-1 uppercase tracking-widest">DISC %</span>
+                        <span className="text-[10px] font-black text-[#7A2B83]/60 block mb-1.5 ml-1 uppercase tracking-widest">DISC ADJUSTMENT (+/-/=)</span>
                         <input 
                           type="text"
                           className="w-full p-3.5 text-sm rounded-2xl border-2 border-[#7A2B83]/20 font-black text-emerald-700 bg-white shadow-sm focus:ring-4 focus:ring-emerald-500/10"

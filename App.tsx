@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Product, OrderItem, ViewType, SavedOrder, SavedOrderItem } from './types';
 import ProductManager from './components/ProductManager';
 import OrderForm from './components/OrderForm';
@@ -8,7 +8,7 @@ import HistoryView from './components/HistoryView';
 import VoiceAssistant from './components/VoiceAssistant';
 import { BrandLogo } from './components/BrandLogo';
 import { calculateItemNet } from './utils/math';
-import { ShoppingBag, Package, ClipboardList, Trash2, History, AlertTriangle } from 'lucide-react';
+import { ShoppingBag, Package, ClipboardList, Trash2, History, Download } from 'lucide-react';
 
 const STORAGE_KEY_PRODUCTS = 'cartonflow_products_v3';
 const STORAGE_KEY_ORDER = 'cartonflow_order';
@@ -123,6 +123,7 @@ const INITIAL_IMAGE_PRODUCTS: Product[] = [
 const App: React.FC = () => {
   const [activeView, setActiveView] = useState<ViewType>('ORDER');
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   
   const [products, setProducts] = useState<Product[]>(() => {
     const saved = localStorage.getItem(STORAGE_KEY_PRODUCTS);
@@ -163,6 +164,19 @@ const App: React.FC = () => {
   });
 
   useEffect(() => {
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  useEffect(() => {
     localStorage.setItem(STORAGE_KEY_PRODUCTS, JSON.stringify(products));
   }, [products]);
 
@@ -173,6 +187,15 @@ const App: React.FC = () => {
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(orderHistory));
   }, [orderHistory]);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setDeferredPrompt(null);
+    }
+  };
 
   const addOrUpdateOrderItem = useCallback((item: OrderItem) => {
     setOrderItems(prev => {
@@ -264,40 +287,50 @@ const App: React.FC = () => {
               <p className="text-[#F9E219] text-[9px] font-black uppercase tracking-[0.2em] mt-1">Purchase Order Setup</p>
             </div>
           </div>
-          {activeView === 'ORDER' ? (
-            <div className="flex gap-2">
-                {showClearConfirm && (
-                    <button 
-                        onClick={handleClearOrder}
-                        className="bg-white text-[#7A2B83] px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest animate-pulse border-2 border-[#F9E219]"
-                    >
-                        Confirm?
-                    </button>
-                )}
-                <button 
-                    type="button"
-                    onClick={() => {
-                        if (orderItems.length > 0) setShowClearConfirm(!showClearConfirm);
-                    }}
-                    className={`p-2.5 rounded-xl transition-all flex items-center justify-center ${
-                    orderItems.length > 0 
-                        ? (showClearConfirm ? 'bg-red-500 text-white' : 'bg-[#F9E219] text-[#7A2B83] shadow-lg active:scale-95') 
-                        : 'bg-white/20 cursor-not-allowed opacity-50'
-                    }`}
-                    disabled={orderItems.length === 0}
-                >
-                    <Trash2 size={20} />
-                </button>
-            </div>
-          ) : activeView === 'HISTORY' ? (
-            <button 
-                type="button"
-                onClick={clearHistory}
-                className="p-2.5 rounded-xl bg-white/20 hover:bg-red-500 transition-all flex items-center justify-center active:scale-95"
-            >
-                <Trash2 size={20} />
-            </button>
-          ) : null}
+          <div className="flex items-center gap-2">
+            {deferredPrompt && (
+              <button 
+                onClick={handleInstallClick}
+                className="flex items-center gap-1.5 bg-[#F9E219] text-[#7A2B83] px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg animate-bounce border-2 border-white/20"
+              >
+                <Download size={14} /> Install
+              </button>
+            )}
+            {activeView === 'ORDER' ? (
+              <div className="flex gap-2">
+                  {showClearConfirm && (
+                      <button 
+                          onClick={handleClearOrder}
+                          className="bg-white text-[#7A2B83] px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest animate-pulse border-2 border-[#F9E219]"
+                      >
+                          Confirm?
+                      </button>
+                  )}
+                  <button 
+                      type="button"
+                      onClick={() => {
+                          if (orderItems.length > 0) setShowClearConfirm(!showClearConfirm);
+                      }}
+                      className={`p-2.5 rounded-xl transition-all flex items-center justify-center ${
+                      orderItems.length > 0 
+                          ? (showClearConfirm ? 'bg-red-500 text-white' : 'bg-[#F9E219] text-[#7A2B83] shadow-lg active:scale-95') 
+                          : 'bg-white/20 cursor-not-allowed opacity-50'
+                      }`}
+                      disabled={orderItems.length === 0}
+                  >
+                      <Trash2 size={20} />
+                  </button>
+              </div>
+            ) : activeView === 'HISTORY' ? (
+              <button 
+                  type="button"
+                  onClick={clearHistory}
+                  className="p-2.5 rounded-xl bg-white/20 hover:bg-red-500 transition-all flex items-center justify-center active:scale-95"
+              >
+                  <Trash2 size={20} />
+              </button>
+            ) : null}
+          </div>
         </div>
       </header>
 
@@ -335,7 +368,6 @@ const App: React.FC = () => {
         )}
       </main>
 
-      {/* Voice Ordering Assistant FAB */}
       <VoiceAssistant 
         products={products}
         onAddItems={handleVoiceOrder}

@@ -7,21 +7,21 @@
     <title>Naya Sawera - CartonFlow</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#7A2B83">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link apple-touch-icon href="logo.png">
+    <link rel="apple-touch-icon" href="https://placehold.jp/7a2b83/ffffff/192x192.png?text=NS">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap');
         body {
             font-family: 'Inter', sans-serif;
             -webkit-tap-highlight-color: transparent;
-            background-color: #FEFCE8; /* Very light yellow background */
+            background-color: #FEFCE8;
         }
         input:focus {
             outline: none;
             box-shadow: 0 0 0 2px rgba(122, 43, 131, 0.4);
         }
-        /* Custom scrollbar for brand */
         ::-webkit-scrollbar {
             width: 6px;
         }
@@ -44,5 +44,14 @@
 </head>
 <body class="text-slate-900">
     <div id="root"></div>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('Service Worker registered', reg))
+                    .catch(err => console.error('Service Worker failed', err));
+            });
+        }
+    </script>
 </body>
 </html>

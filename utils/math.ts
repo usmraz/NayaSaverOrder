@@ -1,28 +1,31 @@
 
 /**
- * Parses a discount string like "+5", "-2", "10" or "=15"
- * Returns the calculated new value based on the current value.
+ * Parses a discount string like "+5", "-2", "10", "13.39%" or "=15"
+ * Returns the calculated new value based on the baseValue.
  */
-export const calculateDiscount = (input: string, currentValue: number): number => {
-  const trimmed = input.trim();
+export const calculateDiscount = (input: string, baseValue: number): number => {
+  const cleaned = input.replace(/%/g, '').trim();
   
-  if (trimmed.startsWith('+')) {
-    const val = parseFloat(trimmed.substring(1));
-    return isNaN(val) ? currentValue : currentValue + val;
+  if (!cleaned) return baseValue;
+
+  if (cleaned.startsWith('+')) {
+    const val = parseFloat(cleaned.substring(1));
+    return isNaN(val) ? baseValue : Number((baseValue + val).toFixed(2));
   }
   
-  if (trimmed.startsWith('-')) {
-    const val = parseFloat(trimmed.substring(1));
-    return isNaN(val) ? currentValue : currentValue - val;
+  if (cleaned.startsWith('-')) {
+    const val = parseFloat(cleaned.substring(1));
+    return isNaN(val) ? baseValue : Number((baseValue - val).toFixed(2));
   }
   
-  if (trimmed.startsWith('=')) {
-    const val = parseFloat(trimmed.substring(1));
-    return isNaN(val) ? currentValue : val;
+  if (cleaned.startsWith('=')) {
+    const val = parseFloat(cleaned.substring(1));
+    return isNaN(val) ? baseValue : val;
   }
 
-  const absoluteVal = parseFloat(trimmed);
-  return isNaN(absoluteVal) ? currentValue : absoluteVal;
+  // If it's a plain number, treat it as an absolute override
+  const absoluteVal = parseFloat(cleaned);
+  return isNaN(absoluteVal) ? baseValue : absoluteVal;
 };
 
 export const unitsToCartons = (units: number, packagingSize: number): string => {
