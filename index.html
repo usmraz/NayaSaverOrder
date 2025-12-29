@@ -8,8 +8,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#7A2B83">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Naya Sawera">
     <link rel="apple-touch-icon" href="https://placehold.jp/7a2b83/ffffff/192x192.png?text=NS">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap');
@@ -44,12 +46,17 @@
 </head>
 <body class="text-slate-900">
     <div id="root"></div>
+    
+    <!-- Load the React application -->
+    <script type="module" src="./index.tsx"></script>
+
     <script>
+        // Register Service Worker with path safety
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then(reg => console.log('Service Worker registered', reg))
-                    .catch(err => console.error('Service Worker failed', err));
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('SW registered', reg.scope))
+                    .catch(err => console.log('SW registration failed', err));
             });
         }
     </script>
