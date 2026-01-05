@@ -12,20 +12,38 @@ export const BrandLogo: React.FC<{ className?: string }> = ({ className = "h-8 w
       {/* Background Square */}
       <rect width="100" height="100" fill="#7A2B83" />
       
-      {/* Golden Sun */}
-      <circle cx="50" cy="45" r="35" fill="#F9E219" />
+      {/* Golden Sun - Sitting on the horizon */}
+      <circle cx="50" cy="48" r="38" fill="#F9E219" />
       
-      {/* Field Lines / Ground */}
-      <path d="M0 65 Q 25 60, 50 65 T 100 65 L 100 100 L 0 100 Z" fill="#7A2B83" />
-      <path d="M0 75 Q 25 70, 50 75 T 100 75" stroke="#F9E219" strokeWidth="3" />
-      <path d="M0 85 Q 25 80, 50 85 T 100 85" stroke="#F9E219" strokeWidth="4" />
-      <path d="M0 95 Q 25 90, 50 95 T 100 95" stroke="#F9E219" strokeWidth="5" />
-      
-      {/* Perspective field lines */}
-      <line x1="20" y1="65" x2="5" y2="100" stroke="#F9E219" strokeWidth="2" opacity="0.6" />
-      <line x1="40" y1="65" x2="35" y2="100" stroke="#F9E219" strokeWidth="2" opacity="0.6" />
-      <line x1="60" y1="65" x2="65" y2="100" stroke="#F9E219" strokeWidth="2" opacity="0.6" />
-      <line x1="80" y1="65" x2="95" y2="100" stroke="#F9E219" strokeWidth="2" opacity="0.6" />
+      {/* Field Lines / Ground - Hand-drawn organic feel as per image */}
+      <g>
+        {/* Band 1 */}
+        <path d="M0 52 L100 52 L100 56 L0 60 Z" fill="#7A2B83" />
+        <path d="M0 60 L100 56 L100 62 L0 67 Z" fill="#F9E219" />
+        
+        {/* Band 2 */}
+        <path d="M0 67 L100 62 L100 68 L0 74 Z" fill="#7A2B83" />
+        <path d="M0 74 L100 68 L100 75 L0 82 Z" fill="#F9E219" />
+        
+        {/* Band 3 */}
+        <path d="M0 82 L100 75 L100 82 L0 90 Z" fill="#7A2B83" />
+        <path d="M0 90 L100 82 L100 90 L0 98 Z" fill="#F9E219" />
+        
+        {/* Band 4 */}
+        <path d="M0 98 L100 90 L100 100 L0 100 Z" fill="#7A2B83" />
+        <path d="M10 100 L100 98 L100 100 Z" fill="#F9E219" />
+      </g>
+
+      {/* TM Mark - Small detail from the original image */}
+      <text 
+        x="2" 
+        y="98" 
+        fill="#F9E219" 
+        style={{ fontSize: '3px', fontWeight: 'bold', fontFamily: 'Arial' }}
+        opacity="0.8"
+      >
+        TM
+      </text>
     </svg>
   );
 };

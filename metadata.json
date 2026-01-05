@@ -1,7 +1,7 @@
 {
   "name": "Naya Sawera Order Pro",
-  "description": "A high-performance PWA for managing purchase orders with automated carton calculations and dynamic discount logic.",
-  "short_name": "CartonFlow",
+  "description": "Professional purchase order management for Naya Sawera distributors with AI voice features.",
+  "short_name": "NayaSawera",
   "start_url": ".",
   "display": "standalone",
   "theme_color": "#7A2B83",

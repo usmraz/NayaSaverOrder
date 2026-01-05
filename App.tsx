@@ -8,11 +8,12 @@ import HistoryView from './components/HistoryView';
 import VoiceAssistant from './components/VoiceAssistant';
 import { BrandLogo } from './components/BrandLogo';
 import { calculateItemNet } from './utils/math';
-import { ShoppingBag, Package, ClipboardList, Trash2, History, Download } from 'lucide-react';
+import { ShoppingBag, Package, ClipboardList, Trash2, History, Download, Sun, Moon } from 'lucide-react';
 
 const STORAGE_KEY_PRODUCTS = 'cartonflow_products_v3';
 const STORAGE_KEY_ORDER = 'cartonflow_order';
 const STORAGE_KEY_HISTORY = 'cartonflow_history_v2';
+const STORAGE_KEY_THEME = 'cartonflow_theme';
 
 const INITIAL_IMAGE_PRODUCTS: Product[] = [
   { id: 'p1', code: '23814', name: 'Actara WG 24gm', packagingSize: 100, basePrice: 500, defaultDiscount: 8.39 },
@@ -124,6 +125,10 @@ const App: React.FC = () => {
   const [activeView, setActiveView] = useState<ViewType>('ORDER');
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    const saved = localStorage.getItem(STORAGE_KEY_THEME);
+    return saved === 'dark';
+  });
   
   const [products, setProducts] = useState<Product[]>(() => {
     const saved = localStorage.getItem(STORAGE_KEY_PRODUCTS);
@@ -162,6 +167,17 @@ const App: React.FC = () => {
     }
     return [];
   });
+
+  // Theme effect
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem(STORAGE_KEY_THEME, 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem(STORAGE_KEY_THEME, 'light');
+    }
+  }, [isDarkMode]);
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: any) => {
@@ -275,9 +291,9 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen pb-24 max-w-lg mx-auto bg-white shadow-2xl relative overflow-x-hidden">
+    <div className="min-h-screen pb-24 max-w-lg lg:max-w-6xl mx-auto bg-white dark:bg-[#1A0B1E]/40 shadow-2xl relative overflow-x-hidden transition-colors duration-300">
       <header className="sticky top-0 z-50 bg-[#7A2B83] text-white px-4 py-4 shadow-xl border-b-4 border-[#F9E219]">
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center max-w-5xl mx-auto">
           <div className="flex items-center gap-3">
             <div className="bg-white p-1 rounded-xl shadow-lg border-2 border-[#F9E219]/20">
                 <BrandLogo className="h-9 w-9" />
@@ -288,6 +304,13 @@ const App: React.FC = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <button 
+                onClick={() => setIsDarkMode(!isDarkMode)}
+                className="p-2.5 rounded-xl bg-white/20 hover:bg-white/30 transition-all active:scale-95"
+                title="Toggle Theme"
+            >
+                {isDarkMode ? <Sun size={20} className="text-[#F9E219]" /> : <Moon size={20} />}
+            </button>
             {deferredPrompt && (
               <button 
                 onClick={handleInstallClick}
@@ -334,7 +357,7 @@ const App: React.FC = () => {
         </div>
       </header>
 
-      <main className="p-4" onClick={() => showClearConfirm && setShowClearConfirm(false)}>
+      <main className="p-4 lg:p-8 max-w-6xl mx-auto" onClick={() => showClearConfirm && setShowClearConfirm(false)}>
         {activeView === 'ORDER' && (
           <OrderForm 
             products={products}
@@ -373,7 +396,7 @@ const App: React.FC = () => {
         onAddItems={handleVoiceOrder}
       />
 
-      <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[94%] max-w-sm bg-slate-900 text-white rounded-[2rem] p-2 flex justify-around items-center shadow-2xl z-50 border border-slate-700/50 backdrop-blur-xl">
+      <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[94%] max-w-sm lg:max-w-md bg-slate-900 text-white rounded-[2rem] p-2 flex justify-around items-center shadow-2xl z-50 border border-slate-700/50 backdrop-blur-xl transition-all">
         <button 
           onClick={() => setActiveView('ORDER')}
           className={`flex flex-col items-center p-3 rounded-2xl transition-all ${activeView === 'ORDER' ? 'bg-[#7A2B83] scale-110 shadow-lg shadow-[#7A2B83]/40 border-b-2 border-[#F9E219]' : 'text-slate-400 hover:text-white'}`}
