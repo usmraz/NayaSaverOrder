@@ -48,7 +48,7 @@ const SummaryView: React.FC<SummaryViewProps> = ({ orderItems, onBack, onSaveToH
     if (orderItems.length === 0) return;
     setIsThinking(true);
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const ai = new GoogleGenAI({ apiKey:AIzaSyAw98bSHvBsScGZr9Wcm68LkdzkWdvR5fc});
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: `Create a professional and concise Purchase Order internal memo for Naya Sawera for the following items: ${summaryString}. Note that the format is "CODE QUANTITY". Return only the memo text.`,

@@ -126,7 +126,7 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ products, onAddItems })
       audioContextInRef.current = audioCtxIn;
       audioContextOutRef.current = audioCtxOut;
 
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const ai = new GoogleGenAI({ apiKey:"AIzaSyAw98bSHvBsScGZr9Wcm68LkdzkWdvR5fc"});
       const productList = products.slice(0, 50).map(p => `${p.name} (${p.code})`).join(', ');
 
       setStatus('Connecting to Naya Sawera AI...');
@@ -203,10 +203,21 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ products, onAddItems })
             if (message.toolCall) {
               for (const fc of message.toolCall.functionCalls) {
                 if (fc.name === 'add_to_order') {
-                  const result = onAddItems(fc.args.items);
-                  sessionPromise.then(session => session.sendToolResponse({
-                    functionResponses: { id: fc.id, name: fc.name, response: { result } }
-                  }));
+                  const result = onAddItems(fc.args.items as { codeOrName: string; quantity: number }[]);
+
+                    sessionRef.current?.sendToolResponse({
+                   functionResponses: [ // Note the square bracket: this must be an array
+          {
+            id: fc.id,
+            name: fc.name,
+            response: { result: result } // Wrapped in the expected response object
+          }
+        ]
+      });
+
+
+
+                 
                 }
               }
             }
