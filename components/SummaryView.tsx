@@ -4,7 +4,6 @@ import { OrderItem } from '../types';
 import { unitsToCartons } from '../utils/math';
 import { BrandLogo } from './BrandLogo';
 import { Copy, Share2, ArrowLeft, Check, Wand2 } from 'lucide-react';
-import { GoogleGenAI } from "@google/genai";
 
 interface SummaryViewProps {
   orderItems: OrderItem[];
@@ -14,8 +13,6 @@ interface SummaryViewProps {
 
 const SummaryView: React.FC<SummaryViewProps> = ({ orderItems, onBack, onSaveToHistory }) => {
   const [copied, setCopied] = useState(false);
-  const [aiAnalysis, setAiAnalysis] = useState('');
-  const [isThinking, setIsThinking] = useState(false);
 
   const summaryString = orderItems
     .map(item => `${item.product.code} ${unitsToCartons(item.quantity, item.product.packagingSize)}`)
@@ -44,22 +41,7 @@ const SummaryView: React.FC<SummaryViewProps> = ({ orderItems, onBack, onSaveToH
     }
   };
 
-  const generateAImemo = async () => {
-    if (orderItems.length === 0) return;
-    setIsThinking(true);
-    try {
-      const ai = new GoogleGenAI({ apiKey:AIzaSyAw98bSHvBsScGZr9Wcm68LkdzkWdvR5fc});
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: `Create a professional and concise Purchase Order internal memo for Naya Sawera for the following items: ${summaryString}. Note that the format is "CODE QUANTITY". Return only the memo text.`,
-      });
-      setAiAnalysis(response.text || 'Could not generate memo.');
-    } catch (err) {
-      setAiAnalysis('Gemini service unavailable. Please check your network.');
-    } finally {
-      setIsThinking(false);
-    }
-  };
+  
 
   return (
     <div className="space-y-6 animate-in slide-in-from-right-4 duration-300 transition-colors">
@@ -97,28 +79,7 @@ const SummaryView: React.FC<SummaryViewProps> = ({ orderItems, onBack, onSaveToH
         </div>
       </div>
 
-      <div className="bg-white dark:bg-[#1A0B1E] p-7 rounded-[2.5rem] border-2 border-slate-100 dark:border-slate-800 shadow-lg space-y-4">
-        <div className="flex justify-between items-center">
-          <h3 className="font-black text-slate-800 dark:text-slate-300 uppercase text-xs tracking-widest">Internal Memo</h3>
-          <button 
-            onClick={generateAImemo}
-            disabled={isThinking || orderItems.length === 0}
-            className="text-[#7A2B83] dark:text-[#F9E219] disabled:opacity-30 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest bg-[#F9E219]/10 px-3 py-2 rounded-full border border-[#F9E219]/30"
-          >
-            <Wand2 size={14} /> {isThinking ? 'Thinking...' : 'AI Memo'}
-          </button>
-        </div>
-        
-        {aiAnalysis ? (
-          <div className="bg-slate-50 dark:bg-slate-900 p-5 rounded-3xl text-xs text-slate-700 dark:text-slate-300 leading-relaxed border-2 border-slate-100 dark:border-slate-800 whitespace-pre-wrap font-medium">
-            {aiAnalysis}
-          </div>
-        ) : (
-          <div className="text-center py-6">
-            <p className="text-[10px] text-slate-400 dark:text-slate-600 uppercase font-black tracking-widest">AI Memo Generator Ready</p>
-          </div>
-        )}
-      </div>
+      
 
       <div className="pt-4 px-2 pb-20">
         <button 
