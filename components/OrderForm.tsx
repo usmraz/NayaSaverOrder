@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Product, OrderItem } from '../types';
 import { unitsToCartons, calculateDiscount, calculateItemNet, formatCurrency } from '../utils/math';
 import { Search, Plus, Trash2, Edit2, CheckCircle2 } from 'lucide-react';
@@ -8,7 +8,6 @@ products: Product[];
 orderItems: OrderItem[];
 onUpdateOrder: (item: OrderItem) => void;
 onRemoveItem: (id: string) => void;
-onClearAll: () => void;
 }
 
 const OrderForm: React.FC<OrderFormProps> = ({
@@ -21,44 +20,50 @@ onRemoveItem
 const [searchTerm, setSearchTerm] = useState('');
 const [selectedProductId, setSelectedProductId] = useState('');
 const [quantity, setQuantity] = useState('');
-const [unitPrice, setUnitPrice] = useState('');
+const [price, setPrice] = useState('');
 const [discountStr, setDiscountStr] = useState('');
-const [editingItemId, setEditingItemId] = useState<string | null>(null);
+const [editingId, setEditingId] = useState<string | null>(null);
 
 const filteredProducts = products.filter(p =>
 p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
 p.code.toLowerCase().includes(searchTerm.toLowerCase())
 );
 
-const currentProduct = products.find(p => p.id === selectedProductId);
+const selectedProduct = products.find(p => p.id === selectedProductId);
 
-const effectiveDiscount = useMemo(() => {
-if (!currentProduct) return 0;
-return calculateDiscount(discountStr, currentProduct.defaultDiscount);
-}, [discountStr, currentProduct]);
+const discount = useMemo(() => {
+if (!selectedProduct) return 0;
+return calculateDiscount(discountStr, selectedProduct.defaultDiscount);
+}, [discountStr, selectedProduct]);
 
-const handleSelectProduct = (p: Product) => {
+const total = useMemo(() => {
+return orderItems.reduce((sum, i) =>
+sum + calculateItemNet(i.price, i.quantity, i.discount), 0
+);
+}, [orderItems]);
+
+const handleSelect = (p: Product) => {
 setSelectedProductId(p.id);
-setUnitPrice(p.basePrice.toString());
-setDiscountStr('');
+setPrice(p.basePrice.toString());
 setQuantity('');
+setDiscountStr('');
 setSearchTerm(p.name);
 };
 
 const handleAdd = () => {
-if (!currentProduct) return;
+if (!selectedProduct) return;
 
 const qty = parseFloat(quantity);
-const price = parseFloat(unitPrice);
+const pr = parseFloat(price);
 
-if (isNaN(qty) || isNaN(price)) return;
+if (isNaN(qty) || isNaN(pr)) return;
 
 onUpdateOrder({
-  id: currentProduct.id,
-  product: currentProduct,
+  id: selectedProduct.id,
+  product: selectedProduct,
   quantity: qty,
-  price: price,
-  discount: effectiveDiscount
+  price: pr,
+  discount: discount
 });
 
 setQuantity('');
@@ -69,30 +74,24 @@ setSearchTerm('');
 
 };
 
-const total = useMemo(() => {
-return orderItems.reduce((sum, i) =>
-sum + calculateItemNet(i.price, i.quantity, i.discount), 0
-);
-}, [orderItems]);
-
 return ( <div className="space-y-4">
 
   {/* SEARCH */}
-  <div className="bg-white dark:bg-[#1A0B1E] p-3 rounded-lg border">
+  <div className="bg-white dark:bg-[#1A0B1E] p-3 rounded-2xl shadow-md border">
     <input
       placeholder="Search product..."
-      className="w-full p-2 rounded border text-sm"
+      className="w-full p-2 rounded-xl text-sm border"
       value={searchTerm}
       onChange={(e) => setSearchTerm(e.target.value)}
     />
 
     {searchTerm && filteredProducts.length > 0 && (
-      <div className="mt-2 border rounded max-h-40 overflow-auto">
+      <div className="mt-2 bg-white dark:bg-slate-900 border rounded-xl shadow-lg max-h-40 overflow-auto">
         {filteredProducts.map(p => (
           <div
             key={p.id}
-            onClick={() => handleSelectProduct(p)}
-            className="px-2 py-1 text-sm hover:bg-gray-100 cursor-pointer"
+            onClick={() => handleSelect(p)}
+            className="px-3 py-2 text-sm hover:bg-[#F9E219]/20 cursor-pointer"
           >
             {p.name} ({p.code})
           </div>
@@ -101,76 +100,111 @@ return ( <div className="space-y-4">
     )}
   </div>
 
-  {/* INPUT ROW */}
-  {currentProduct && (
-    <div className="bg-white dark:bg-[#1A0B1E] p-3 rounded-lg border space-y-2">
+  {/* INPUT */}
+  {selectedProduct && (
+    <div className="bg-white dark:bg-[#1A0B1E] p-3 rounded-2xl shadow-md border space-y-2">
 
-      <div className="text-xs font-bold">{currentProduct.name}</div>
+      <div className="text-xs font-black text-[#7A2B83]">
+        {selectedProduct.name}
+      </div>
 
       <div className="grid grid-cols-3 gap-2">
+
         <input
           placeholder="Qty"
-          className="p-2 border rounded text-sm"
+          className="p-2 rounded-xl border text-sm"
           value={quantity}
           onChange={(e) => setQuantity(e.target.value)}
         />
+
         <input
           placeholder="Price"
-          className="p-2 border rounded text-sm"
-          value={unitPrice}
-          onChange={(e) => setUnitPrice(e.target.value)}
+          className="p-2 rounded-xl border text-sm"
+          value={price}
+          onChange={(e) => setPrice(e.target.value)}
         />
+
         <input
           placeholder="Disc"
-          className="p-2 border rounded text-sm"
+          className="p-2 rounded-xl border text-sm"
           value={discountStr}
           onChange={(e) => setDiscountStr(e.target.value)}
         />
+
       </div>
 
       <button
         onClick={handleAdd}
-        className="w-full bg-purple-700 text-white py-2 rounded text-sm"
+        className="w-full bg-[#7A2B83] text-white py-2 rounded-xl text-sm flex items-center justify-center gap-2 shadow-md"
       >
-        Add
+        <Plus size={16} /> Add
       </button>
 
     </div>
   )}
 
   {/* TOTAL */}
-  <div className="text-right text-sm font-bold">
+  <div className="text-right text-sm font-black text-[#7A2B83]">
     Total: {formatCurrency(total)}
   </div>
 
-  {/* ORDER ITEMS */}
-  <div className="space-y-2">
+  {/* ITEMS */}
+  <div className="space-y-3">
 
     {orderItems.map(item => {
       const net = calculateItemNet(item.price, item.quantity, item.discount);
 
       return (
-        <div key={item.id} className="bg-slate-900 text-white p-2 rounded flex justify-between items-center">
+        <div key={item.id} className="bg-white dark:bg-[#1A0B1E] p-3 rounded-2xl shadow-md border">
 
-          <div className="flex items-center gap-2">
-            <div className="bg-purple-700 px-2 py-1 text-[10px] rounded">
-              {unitsToCartons(item.quantity, item.product.packagingSize)} CTN
-            </div>
+          {/* TOP */}
+          <div className="flex justify-between items-start mb-2">
 
             <div>
-              <div className="text-xs">{item.product.name}</div>
-              <div className="text-[10px] text-gray-400">
-                {item.product.packagingSize}u @ {item.price} -{item.discount}%
+              <div className="text-sm font-black text-slate-900 dark:text-white">
+                {item.product.name}
+              </div>
+              <div className="text-[10px] text-slate-400">
+                {item.product.code}
               </div>
             </div>
+
+            <div className="flex gap-2">
+              <button onClick={() => onRemoveItem(item.id)}>
+                <Trash2 size={16} />
+              </button>
+            </div>
+
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className="text-xs">{formatCurrency(net)}</span>
+          {/* MID */}
+          <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-900 p-2 rounded-xl">
 
-            <button onClick={() => onRemoveItem(item.id)}>
-              <Trash2 size={14} />
-            </button>
+            <div className="text-center">
+              <div className="text-[9px]">Units</div>
+              <div className="text-sm font-black">{item.quantity}</div>
+            </div>
+
+            <div className="text-center">
+              <div className="text-[9px]">CTN</div>
+              <div className="bg-[#F9E219] text-[#7A2B83] px-2 rounded text-sm font-black">
+                {unitsToCartons(item.quantity, item.product.packagingSize)}
+              </div>
+            </div>
+
+            <div className="text-center">
+              <div className="text-[9px]">Disc</div>
+              <div className="text-sm font-black text-emerald-600">
+                {item.discount}%
+              </div>
+            </div>
+
+          </div>
+
+          {/* BOTTOM */}
+          <div className="flex justify-between mt-2 text-sm font-black">
+            <span>Subtotal</span>
+            <span>{formatCurrency(net)}</span>
           </div>
 
         </div>

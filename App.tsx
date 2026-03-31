@@ -263,7 +263,6 @@ const App: React.FC = () => {
       orderItems={orderItems}
       onUpdateOrder={addOrUpdateOrderItem}
       onRemoveItem={removeOrderItem}
-      onClearAll={handleClearOrder}
     />
   )}
 

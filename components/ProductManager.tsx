@@ -246,7 +246,7 @@ const ProductManager: React.FC<ProductManagerProps> = ({ products, setProducts }
                   />
                 </div>
               ) : (
-                <div className="bg-white dark:bg-[#1A0B1E] p-5 rounded-[2rem] border-2 border-slate-100 dark:border-slate-800 shadow-lg flex items-center justify-between group hover:border-[#7A2B83]/30 transition-all hover:shadow-xl">
+                <div className="bg-white dark:bg-[#1A0B1E] p-5 rounded-[1.5rem] border-2 border-slate-100 dark:border-slate-800 shadow-lg flex items-center justify-between group hover:border-[#7A2B83]/30 transition-all hover:shadow-xl">
                   <div className="flex-1 min-w-0 pr-4">
                     <div className="flex items-center gap-2 mb-1">
                       <p className="font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight truncate text-sm">{p.name}</p>
@@ -254,12 +254,25 @@ const ProductManager: React.FC<ProductManagerProps> = ({ products, setProducts }
                         <div className="h-1.5 w-1.5 rounded-full bg-[#F9E219] animate-pulse"></div>
                       )}
                     </div>
-                    <div className="flex items-center gap-3 flex-wrap">
-                      <span className="text-[9px] px-2.5 py-1 bg-[#F9E219] rounded-full font-black text-[#7A2B83] border border-[#7A2B83]/10 uppercase tracking-wider">{p.code}</span>
-                      <span className="text-[10px] text-slate-400 dark:text-slate-500 font-black uppercase tracking-tighter">Box: {p.packagingSize}u</span>
-                      <span className="text-[10px] text-[#7A2B83] dark:text-[#F9E219] font-black uppercase tracking-tighter">{formatCurrency(p.basePrice)}</span>
-                      <span className="text-[10px] text-emerald-600 font-black uppercase tracking-tighter bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded-md">{p.defaultDiscount}% Disc</span>
-                    </div>
+                    <div className="flex items-center gap-2 overflow-hidden">
+
+  <span className="text-[9px] px-2 py-0.5 bg-[#F9E219] rounded-full font-black text-[#7A2B83] whitespace-nowrap">
+    {p.code}
+  </span>
+
+  <span className="text-[10px] text-slate-400 font-black whitespace-nowrap">
+    {p.packagingSize}U
+  </span>
+
+  <span className="text-[10px] text-[#7A2B83] dark:text-[#F9E219] font-black whitespace-nowrap">
+    {formatCurrency(p.basePrice)}
+  </span>
+
+  <span className="text-[10px] text-emerald-600 font-black bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded-md whitespace-nowrap">
+    {p.defaultDiscount}%
+  </span>
+
+</div>
                   </div>
                   <div className="flex gap-2">
                     <button 
